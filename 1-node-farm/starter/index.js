@@ -1,6 +1,8 @@
 const fs = require("fs");
 const http = require("http");
 const url = require("url");
+const replaceTemplate = require("./modules/replaceTemplate");
+const slugify = require("slugify");
 
 ///////////////////////////////// File System //////////////////////////////////
 // Blocking, synchronous way
@@ -26,31 +28,6 @@ const url = require("url");
 // console.log("Will read file...");
 
 ///////////////////////////////// Server //////////////////////////////////
-const replaceTemplate = (temp, product) => {
-  const replace = (field, value) => {
-    const pattern = new RegExp(
-      "\\{%" + field + "%\\}|\\{&" + field + "&\\}",
-      "g",
-    );
-    return (temp) => temp.replace(pattern, value);
-  };
-
-  let output = temp;
-  output = replace("PRODUCTNAME", product.productName)(output);
-  output = replace("IMAGE", product.image)(output);
-  output = replace("PRICE", product.price)(output);
-  output = replace("FROM", product.from)(output);
-  output = replace("NUTRIENTSCTNAME", product.nutrients)(output);
-  output = replace("QUANTITY", product.quantity)(output);
-  output = replace("DESCRIPTION", product.description)(output);
-  output = replace("ID", product.id)(output);
-
-  if (!product.organic) {
-    output = replace("NOT_ORGANIC", "not-organic")(output);
-  }
-
-  return output;
-};
 
 const tempOverview = fs.readFileSync(
   `${__dirname}/templates/template_overview.html`,
@@ -66,6 +43,9 @@ const tempProduct = fs.readFileSync(
 );
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8");
 const dataObj = JSON.parse(data);
+
+const slugs = dataObj.map((el) => slugify(el.productName, { lower: true }));
+console.log(slugs);
 
 const server = http.createServer((req, res) => {
   const { query, pathname } = url.parse(req.url, true);
